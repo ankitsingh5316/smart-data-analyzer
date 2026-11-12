@@ -72,7 +72,7 @@ async function requestSignupOtp({ name, email, password }) {
   );
   const delivered = await sendOtpEmail(email, otp);
   const data = { otpRequired: true, email, delivered, expiresInMinutes: OTP_MINUTES };
-  if (!delivered && env.nodeEnv !== 'production') data.devOtp = otp;
+  if (!delivered && (env.exposeAuthCodes || env.nodeEnv !== 'production')) data.devOtp = otp;
   return data;
 }
 
@@ -206,7 +206,7 @@ async function forgotPassword({ email }) {
   const resetUrl = `${env.clientOrigin}/reset-password?token=${token}&email=${encodeURIComponent(user.email)}`;
   const delivered = await deliverResetEmail(user, resetUrl);
   response.delivered = delivered;
-  if (!delivered && env.nodeEnv !== 'production') {
+  if (!delivered && (env.exposeAuthCodes || env.nodeEnv !== 'production')) {
     response.resetUrl = resetUrl;
   }
   return response;

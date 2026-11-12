@@ -1,6 +1,8 @@
 node_modules/
 dist/
 .angular/
+.vercel/
+.tools/
 .env
 backend/.env
 backend/storage/uploads/*

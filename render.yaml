@@ -1,0 +1,34 @@
+services:
+  - type: web
+    name: smart-data-analyzer-api
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm install --prefix backend
+    startCommand: npm start --prefix backend
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: CLIENT_ORIGIN
+        value: https://smart-data-analyzer-nine.vercel.app
+      - key: DB_SSL
+        value: "true"
+      - key: DB_NAME
+        value: smart_data_analyzer
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: EXPOSE_AUTH_CODES
+        value: "true"
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_SSL_CA_BASE64
+        sync: false
+      - key: JWT_SECRET
+        sync: false

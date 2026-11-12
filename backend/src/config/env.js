@@ -20,8 +20,11 @@ const env = {
     port: Number(process.env.DB_PORT || 3306),
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD ?? '',
-    database: databaseName()
+    database: databaseName(),
+    ssl: process.env.DB_SSL === 'true',
+    sslCa: process.env.DB_SSL_CA || ''
   },
+  exposeAuthCodes: process.env.EXPOSE_AUTH_CODES === 'true',
   jwtSecret: process.env.JWT_SECRET || '',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
   smtp: {

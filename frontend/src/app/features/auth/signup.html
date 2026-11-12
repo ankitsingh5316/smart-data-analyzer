@@ -47,7 +47,7 @@
       <p class="muted" style="margin: 8px 0 16px">Sent to {{ form.controls.email.value }}.</p>
       @if (devOtp()) {
         <div class="banner info">
-          <strong>Local code: {{ devOtp() }}</strong>
+          <strong>Verification code: {{ devOtp() }}</strong>
           <p>No email server is configured, so the code is shown here instead of being sent.</p>
         </div>
       }
