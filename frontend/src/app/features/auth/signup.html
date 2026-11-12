@@ -1,0 +1,68 @@
+<app-auth-layout>
+  <div class="auth-form">
+    @if (status()) {
+      <div class="banner" [class.info]="statusTone() === 'info'" [class.error]="statusTone() === 'error'" [class.success]="statusTone() === 'success'">
+        {{ status() }}
+      </div>
+    }
+
+    @if (step() === 'details') {
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <h1>Create account</h1>
+        <p class="muted" style="margin: 8px 0 24px">Each field shows whether it is correct. A 6-digit email code confirms the account.</p>
+        <label class="field">
+          <span>Name</span>
+          <input formControlName="name" autocomplete="name" [class]="inputClass('name')" />
+        </label>
+        @if (feedback('name').text) {
+          <p [class.field-ok]="feedback('name').tone === 'ok'" [class.field-error]="feedback('name').tone === 'bad'">{{ feedback('name').text }}</p>
+        }
+        <label class="field">
+          <span>Email</span>
+          <input type="email" formControlName="email" autocomplete="email" [class]="inputClass('email')" />
+        </label>
+        @if (feedback('email').text) {
+          <p [class.field-ok]="feedback('email').tone === 'ok'" [class.field-error]="feedback('email').tone === 'bad'">{{ feedback('email').text }}</p>
+        }
+        <label class="field">
+          <span>Password</span>
+          <input type="password" formControlName="password" autocomplete="new-password" [class]="inputClass('password')" />
+        </label>
+        @if (feedback('password').text) {
+          <p [class.field-ok]="feedback('password').tone === 'ok'" [class.field-error]="feedback('password').tone === 'bad'">{{ feedback('password').text }}</p>
+        }
+        <label class="field">
+          <span>Confirm password</span>
+          <input type="password" formControlName="confirmPassword" autocomplete="new-password" [class]="inputClass('confirmPassword')" />
+        </label>
+        @if (feedback('confirmPassword').text) {
+          <p [class.field-ok]="feedback('confirmPassword').tone === 'ok'" [class.field-error]="feedback('confirmPassword').tone === 'bad'">{{ feedback('confirmPassword').text }}</p>
+        }
+        <button class="button primary full" type="submit" [disabled]="submitting()">
+          {{ submitting() ? 'Sending code…' : 'Send verification code' }}
+        </button>
+      </form>
+    } @else {
+      <h1>Enter the code</h1>
+      <p class="muted" style="margin: 8px 0 16px">Sent to {{ form.controls.email.value }}.</p>
+      @if (devOtp()) {
+        <div class="banner info">
+          <strong>Local code: {{ devOtp() }}</strong>
+          <p>No email server is configured, so the code is shown here instead of being sent.</p>
+        </div>
+      }
+      <label class="field">
+        <span>6-digit code</span>
+        <input [value]="otp()" (input)="otp.set($any($event.target).value)" inputmode="numeric" maxlength="6" autocomplete="one-time-code" />
+      </label>
+      <button class="button primary full" type="button" [disabled]="verifying()" (click)="verify()">
+        {{ verifying() ? 'Checking code…' : 'Verify and create account' }}
+      </button>
+      <div class="inline-actions" style="margin-top: 12px">
+        <button class="button ghost small" type="button" [disabled]="submitting()" (click)="resend()">Resend code</button>
+        <button class="button ghost small" type="button" (click)="editDetails()">Edit details</button>
+      </div>
+    }
+    <p class="muted" style="margin-top: 16px">Already registered? <a routerLink="/login">Sign in</a></p>
+  </div>
+</app-auth-layout>

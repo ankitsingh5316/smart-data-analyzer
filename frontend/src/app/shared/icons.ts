@@ -1,0 +1,23 @@
+export const ICONS: Record<string, string> = {
+  dashboard: 'M4 4h6.5v6.5H4z M13.5 4H20v6.5h-6.5z M4 13.5h6.5V20H4z M13.5 13.5H20V20h-6.5z',
+  database: 'M12 3c-4.4 0-8 1.2-8 3v12c0 1.8 3.6 3 8 3s8-1.2 8-3V6c0-1.8-3.6-3-8-3z M4 6c0 1.8 3.6 3 8 3s8-1.2 8-3 M4 12c0 1.8 3.6 3 8 3s8-1.2 8-3',
+  upload: 'M12 16V5 M8 9l4-4 4 4 M5 19h14',
+  table: 'M4 5h16v14H4z M4 10h16 M10 10v9',
+  filter: 'M4 5h16l-6 7v6l-4 2v-8z',
+  chart: 'M4 19V5 M4 19h16 M8 16v-4 M12 16V8 M16 16v-6',
+  file: 'M7 3h7l5 5v13H7z M14 3v5h5',
+  bookmark: 'M7 4h10a1 1 0 0 1 1 1v15l-6-3.2L6 20V5a1 1 0 0 1 1-1z',
+  settings: 'M4 8h16 M4 16h16 M9 8v.01 M15 16v.01 M9 6.2a1.8 1.8 0 1 0 0 3.6a1.8 1.8 0 0 0 0-3.6z M15 14.2a1.8 1.8 0 1 0 0 3.6a1.8 1.8 0 0 0 0-3.6z',
+  bell: 'M6 16V10a6 6 0 1 1 12 0v6l1.5 2h-15z M10 19a2 2 0 0 0 4 0',
+  logout: 'M10 7V5H5v14h5v-2 M11 12h8 M16 9l3 3-3 3',
+  user: 'M12 12a4 4 0 1 0 0-8a4 4 0 0 0 0 8z M5.5 20c1.4-2.8 3.6-4 6.5-4s5.1 1.2 6.5 4',
+  search: 'M11 18a7 7 0 1 1 0-14a7 7 0 0 1 0 14z M20 20l-3.2-3.2',
+  plus: 'M12 5v14 M5 12h14',
+  trash: 'M5 7h14 M9 7V5h6v2 M8 7l1 13h6l1-13',
+  download: 'M12 4v11 M8 11l4 4 4-4 M5 20h14',
+  check: 'M5 12.5l4.2 4.2L19 7.5',
+  alert: 'M12 4l9 16H3z M12 10v4 M12 17h.01',
+  menu: 'M4 7h16 M4 12h16 M4 17h16',
+  x: 'M6 6l12 12 M18 6L6 18',
+  columns: 'M5 4h14v16H5z M10 4v16 M15 4v16'
+};

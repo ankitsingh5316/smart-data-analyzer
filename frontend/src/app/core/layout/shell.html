@@ -1,0 +1,89 @@
+<div class="app-shell">
+  @if (navOpen()) {
+    <button class="scrim" type="button" aria-label="Close navigation" (click)="navOpen.set(false)"></button>
+  }
+  <aside class="sidebar" [class.open]="navOpen()">
+    <div class="brand">
+      <div class="brand-mark">S</div>
+      <div>
+        <strong>Smart Data Analyzer</strong>
+        <span>Workspace</span>
+      </div>
+    </div>
+    <div class="nav-label">Workspace</div>
+    <nav>
+      @for (item of nav; track item.path) {
+        <a class="nav-link" [routerLink]="item.path" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: item.exact }">
+          <app-icon [name]="item.icon" />
+          <span>{{ item.label }}</span>
+        </a>
+      }
+    </nav>
+    <div class="sidebar-foot">Private datasets stay with your account.</div>
+  </aside>
+
+  <div class="workspace">
+    <header class="topbar">
+      <div class="top-actions">
+        <button class="icon-button menu-button" type="button" aria-label="Open navigation" (click)="navOpen.set(true)">
+          <app-icon name="menu" />
+        </button>
+        <h1>{{ title() }}</h1>
+      </div>
+      <div class="top-actions">
+        <div style="position: relative">
+          <button class="icon-button" type="button" aria-label="Notifications" (click)="toggleNotes()">
+            <app-icon name="bell" />
+            @if (unseen()) { <span class="badge-count">{{ unseen() }}</span> }
+          </button>
+          @if (notesOpen()) {
+            <div class="popover">
+              <div class="popover-head">
+                <strong>Recent activity</strong>
+                <button class="button ghost small" type="button" (click)="dismissAll()">Dismiss</button>
+              </div>
+              @if (!notifications().length) {
+                <p class="muted" style="padding: 8px">Uploads and reports will show up here.</p>
+              }
+              @for (item of notifications(); track item.id) {
+                <a class="note" [routerLink]="item.href" (click)="markSeen(item)">
+                  <span>
+                    <strong class="truncate">{{ item.title }}</strong>
+                    <small>{{ item.type === 'dataset' ? 'Dataset' : 'Report' }}</small>
+                  </span>
+                  <app-status-pill [status]="item.status" />
+                </a>
+              }
+            </div>
+          }
+        </div>
+        <div style="position: relative">
+          <button class="avatar-button" type="button" (click)="toggleProfile()" aria-label="Account menu">
+            <span class="avatar">{{ initials() }}</span>
+            <span>{{ user()?.name || 'Account' }}</span>
+          </button>
+          @if (profileOpen()) {
+            <div class="popover profile">
+              <div style="padding: 8px 8px 4px">
+                <strong>{{ user()?.name }}</strong>
+                <div class="muted">{{ user()?.email }}</div>
+              </div>
+              <a class="menu-item" routerLink="/app/settings" (click)="closeMenus()">
+                <app-icon name="settings" /> Settings
+              </a>
+              <button class="menu-item" type="button" (click)="logout()">
+                <app-icon name="logout" /> Log out
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+    </header>
+    @if (profileOpen() || notesOpen()) {
+      <button class="scrim" type="button" aria-label="Close menu" (click)="closeMenus()"></button>
+    }
+    <main class="content">
+      <router-outlet />
+    </main>
+  </div>
+</div>

@@ -1,0 +1,116 @@
+<div class="page-head">
+  <div>
+    <h1>Reports</h1>
+    <p>Generate Excel, CSV, or PDF files in the background, then download them from the history below.</p>
+  </div>
+</div>
+
+<section class="panel">
+  <form [formGroup]="form" (ngSubmit)="generate()">
+    <div class="row g-3">
+      <div class="col-12 col-lg-6">
+        <label class="field"><span>Title</span><input formControlName="title" /></label>
+      </div>
+      <div class="col-12 col-lg-3">
+        <label class="field">
+          <span>Dataset</span>
+          <select formControlName="datasetId" (change)="onDatasetChange($any($event.target).value)">
+            <option value="">Select a dataset</option>
+            @for (dataset of datasets(); track dataset.id) { <option [value]="dataset.id">{{ dataset.name }}</option> }
+          </select>
+        </label>
+      </div>
+      <div class="col-12 col-lg-3">
+        <label class="field">
+          <span>Saved filter</span>
+          <select formControlName="savedFilterId">
+            <option value="">All records</option>
+            @for (filter of savedFilters(); track filter.id) { <option [value]="filter.id">{{ filter.name }}</option> }
+          </select>
+        </label>
+      </div>
+    </div>
+    <div class="field">
+      <span>Format</span>
+      <div class="choice-grid">
+        @for (item of ['xlsx', 'csv', 'pdf']; track item) {
+          <button class="choice" type="button" [class.active]="format() === item" (click)="format.set($any(item))">{{ item === 'xlsx' ? 'Excel' : item === 'csv' ? 'CSV' : 'PDF' }}</button>
+        }
+      </div>
+    </div>
+    <div class="field">
+      <span>Columns</span>
+      <div class="choice-grid">
+        @for (column of columns(); track column.id) {
+          <label class="check">
+            <input type="checkbox" [checked]="selectedColumns().includes(column.columnKey)" (change)="toggleColumn(column.columnKey)" />
+            <span>{{ column.columnName }}</span>
+          </label>
+        }
+      </div>
+      @if (!columns().length) { <p class="muted">Choose a dataset to list its columns.</p> }
+    </div>
+    <button class="button primary" type="submit" [disabled]="submitting()">{{ submitting() ? 'Queuing…' : 'Generate report' }}</button>
+  </form>
+</section>
+
+<section class="panel" style="margin-top: 16px">
+  <h2>Report history</h2>
+  @if (loading()) {
+    <div class="skeleton"></div>
+  } @else if (!reports().length) {
+    <app-empty-state icon="file" title="No reports yet" message="Generate a report from a dataset to see it here." />
+  } @else {
+    <div class="table-wrap">
+      <table class="data">
+        <thead>
+          <tr>
+            <th>Title</th><th>Dataset</th><th>Format</th><th>Status</th><th>Records</th><th>Size</th><th>Created</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (report of reports(); track report.id) {
+            <tr>
+              <td>
+                <strong>{{ report.title }}</strong>
+                @if (report.errorMessage) { <div class="field-error">{{ report.errorMessage }}</div> }
+              </td>
+              <td>{{ report.datasetName || 'Removed dataset' }}</td>
+              <td>{{ report.format | uppercase }}</td>
+              <td><app-status-pill [status]="report.status" /></td>
+              <td>{{ report.recordCount === null ? '—' : (report.recordCount | number) }}</td>
+              <td>{{ report.fileSize | fileSize }}</td>
+              <td>{{ report.createdAt | date:'medium' }}</td>
+              <td class="actions">
+                <div class="inline-actions">
+                  @if (report.status === 'completed') {
+                    <button class="button secondary small" type="button" (click)="download(report)">Download</button>
+                  }
+                  <button class="button danger small" type="button" (click)="$event.stopPropagation(); remove(report)">Delete</button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
+
+<section class="panel" style="margin-top: 16px">
+  <h2>Activity</h2>
+  @if (!history().length) {
+    <p class="muted">Generation and download events will appear here.</p>
+  } @else {
+    @for (item of history(); track item.id) {
+      <div class="list-row">
+        <div>
+          <strong>{{ item.reportTitle || 'Report' }}</strong>
+          <span class="muted">{{ item.details || item.action }}</span>
+        </div>
+        <app-status-pill [status]="item.action" />
+        <span class="muted">{{ item.createdAt | date:'medium' }}</span>
+      </div>
+    }
+  }
+</section>

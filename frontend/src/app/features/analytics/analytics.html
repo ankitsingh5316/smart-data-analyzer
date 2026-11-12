@@ -1,0 +1,111 @@
+<div class="page-head">
+  <div>
+    <h1>Analytics</h1>
+    <p>Counts, distributions, and numeric ranges are calculated from the stored rows.</p>
+  </div>
+</div>
+
+<label class="field" style="max-width: 420px">
+  <span>Dataset</span>
+  <select [value]="datasetId()" (change)="chooseDataset($any($event.target).value)">
+    <option value="">Select a dataset</option>
+    @for (dataset of datasets(); track dataset.id) { <option [value]="dataset.id">{{ dataset.name }}</option> }
+  </select>
+</label>
+
+@if (loading()) {
+  <div class="skeleton"></div>
+} @else if (data(); as analytics) {
+  <div class="row g-3">
+    <div class="col-12 col-md-4"><app-kpi-card label="Records" [value]="analytics.totalRecords" hint="Imported rows" icon="table" /></div>
+    <div class="col-12 col-md-4"><app-kpi-card label="Duplicate records" [value]="analytics.duplicateRecords" hint="Rows with an identical copy" icon="columns" /></div>
+    <div class="col-12 col-md-4"><app-kpi-card label="Missing values" [value]="analytics.missingValues" hint="Empty cells across all columns" icon="alert" /></div>
+  </div>
+
+  <div class="row g-3" style="margin-top: 4px">
+    <div class="col-12 col-lg-4">
+      <section class="panel">
+        <label class="field">
+          <span>Category column</span>
+          <select [value]="category()" (change)="reload({ category: $any($event.target).value })">
+            @for (column of analytics.columns; track column.id) {
+              @if (column.dataType === 'string' || column.dataType === 'boolean') {
+                <option [value]="column.columnKey">{{ column.columnName }}</option>
+              }
+            }
+          </select>
+        </label>
+        @if (analytics.category?.buckets?.length) {
+          <app-chart-panel type="doughnut" [labels]="labels(analytics.category?.buckets)" [values]="counts(analytics.category?.buckets)" [seriesLabel]="analytics.category?.columnName || 'Categories'" />
+        } @else {
+          <app-empty-state icon="chart" title="No categories" message="This dataset has no text column to group." />
+        }
+      </section>
+    </div>
+    <div class="col-12 col-lg-4">
+      <section class="panel">
+        <label class="field">
+          <span>Numeric column</span>
+          <select [value]="numeric()" (change)="reload({ numeric: $any($event.target).value })">
+            @for (column of analytics.columns; track column.id) {
+              @if (column.dataType === 'number') { <option [value]="column.columnKey">{{ column.columnName }}</option> }
+            }
+          </select>
+        </label>
+        @if (analytics.numeric) {
+          <p class="muted">Min {{ analytics.numeric.min ?? '—' }} · Max {{ analytics.numeric.max ?? '—' }} · Avg {{ analytics.numeric.avg ?? '—' }}</p>
+          <app-chart-panel type="bar" [labels]="labels(analytics.numeric.buckets)" [values]="counts(analytics.numeric.buckets)" [seriesLabel]="analytics.numeric.columnName" />
+        } @else {
+          <app-empty-state icon="chart" title="No numeric column" message="Numeric statistics appear when a column contains numbers." />
+        }
+      </section>
+    </div>
+    <div class="col-12 col-lg-4">
+      <section class="panel">
+        <label class="field">
+          <span>Date column</span>
+          <select [value]="date()" (change)="reload({ date: $any($event.target).value })">
+            @for (column of analytics.columns; track column.id) {
+              @if (column.dataType === 'date') { <option [value]="column.columnKey">{{ column.columnName }}</option> }
+            }
+          </select>
+        </label>
+        @if (analytics.dates?.buckets?.length) {
+          <app-chart-panel type="line" [labels]="labels(analytics.dates?.buckets)" [values]="counts(analytics.dates?.buckets)" [seriesLabel]="analytics.dates?.columnName || 'Dates'" />
+        } @else {
+          <app-empty-state icon="chart" title="No dates" message="Date analysis appears when a column contains dates." />
+        }
+      </section>
+    </div>
+  </div>
+
+  <section class="panel" style="margin-top: 16px">
+    <h2>Column statistics</h2>
+    <div class="table-wrap">
+      <table class="data">
+        <thead>
+          <tr><th>Column</th><th>Type</th><th>Unique</th><th>Missing</th><th>Min</th><th>Max</th><th>Average</th></tr>
+        </thead>
+        <tbody>
+          @for (column of analytics.columns; track column.id) {
+            <tr>
+              <td>{{ column.columnName }}</td>
+              <td>{{ column.dataType }}</td>
+              <td>{{ column.uniqueCount | number }}</td>
+              <td>{{ column.nullCount | number }}</td>
+              <td>{{ column.min ?? '—' }}</td>
+              <td>{{ column.max ?? '—' }}</td>
+              <td>{{ column.avg ?? '—' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+} @else {
+  <section class="panel">
+    <app-empty-state icon="chart" title="Choose a dataset" message="Analytics uses the columns detected during import.">
+      <a class="button primary" routerLink="/app/upload">Upload data</a>
+    </app-empty-state>
+  </section>
+}

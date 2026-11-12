@@ -1,0 +1,97 @@
+<div class="page-head">
+  <div>
+    <h1>Upload data</h1>
+    <p>CSV and Excel files can use any column names. The first row is treated as the header.</p>
+  </div>
+</div>
+
+<section class="panel">
+  <div
+    class="dropzone"
+    [class.dragover]="dragOver()"
+    (dragover)="onDrag($event)"
+    (dragleave)="onLeave($event)"
+    (drop)="onDrop($event)"
+    (click)="picker.click()"
+    (keydown.enter)="picker.click()"
+    tabindex="0"
+    role="button">
+    <div>
+      <h2>Drop a file here</h2>
+      <p class="muted">or click to browse. CSV, XLSX, and XLS up to 25 MB.</p>
+    </div>
+  </div>
+  <input #picker hidden type="file" accept=".csv,.xlsx,.xls,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" (change)="onFile($event)" />
+
+  @if (file(); as selected) {
+    <div class="list-row">
+      <div>
+        <strong>{{ selected.name }}</strong>
+        <span class="muted">{{ selected.size | fileSize }}</span>
+      </div>
+      <span></span>
+      <button class="button primary" type="button" [disabled]="uploading() || processing()" (click)="startUpload()">
+        {{ uploading() ? 'Uploading…' : processing() ? 'Processing…' : 'Import file' }}
+      </button>
+    </div>
+  }
+  @if (uploading() || processing()) {
+    <div class="progress" aria-label="Upload progress"><span [style.width.%]="processing() ? 100 : progress()"></span></div>
+    <p class="muted" style="margin-top: 8px">{{ processing() ? 'Reading columns, missing values, and duplicates.' : progress() + '% uploaded' }}</p>
+  }
+  @if (error()) { <div class="banner error" style="margin-top: 16px">{{ error() }}</div> }
+</section>
+
+@if (detail(); as result) {
+  <section class="panel" style="margin-top: 16px">
+    <div class="page-head">
+      <div>
+        <h2>{{ result.dataset.name }}</h2>
+        <p>{{ result.dataset.rowCount | number }} records · {{ result.dataset.columnCount }} columns · {{ result.dataset.duplicateCount | number }} duplicate rows · {{ result.dataset.missingValueCount | number }} missing values</p>
+      </div>
+      <app-status-pill [status]="result.dataset.status" />
+    </div>
+    <div class="banner success">Import finished. Column types were detected from the values in the file.</div>
+    <div class="table-wrap" style="max-height: 240px">
+      <table class="data">
+        <thead>
+          <tr><th>Column</th><th>Key</th><th>Type</th><th>Missing</th><th>Unique</th></tr>
+        </thead>
+        <tbody>
+          @for (column of result.columns; track column.id) {
+            <tr>
+              <td>{{ column.columnName }}</td>
+              <td>{{ column.columnKey }}</td>
+              <td>{{ column.dataType }}</td>
+              <td>{{ column.nullCount | number }}</td>
+              <td>{{ column.uniqueCount | number }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <h2 style="margin-top: 18px">Preview</h2>
+    <div class="table-wrap">
+      <table class="data">
+        <thead>
+          <tr>
+            @for (column of result.columns; track column.id) { <th>{{ column.columnName }}</th> }
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of result.preview; track row.id) {
+            <tr>
+              @for (column of result.columns; track column.id) {
+                <td>{{ row.values[column.columnKey] | cell }}</td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <div class="page-actions" style="margin-top: 16px">
+      <a class="button primary" [routerLink]="['/app/explorer', result.dataset.id]">Open in explorer</a>
+      <a class="button secondary" [routerLink]="['/app/analytics', result.dataset.id]">View analytics</a>
+    </div>
+  </section>
+}

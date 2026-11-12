@@ -1,0 +1,34 @@
+<div class="page-head">
+  <div>
+    <h1>Saved filters</h1>
+    <p>Reuse a filter on its dataset, or remove ones you no longer need.</p>
+  </div>
+  <a class="button primary" routerLink="/app/filters">Build a filter</a>
+</div>
+
+@if (loading()) {
+  <div class="skeleton"></div>
+} @else if (!filters().length) {
+  <section class="panel">
+    <app-empty-state icon="bookmark" title="No saved filters" message="Save a configuration from Advanced Filters and it will be listed here.">
+      <a class="button primary" routerLink="/app/filters">Advanced filters</a>
+    </app-empty-state>
+  </section>
+} @else {
+  <section class="panel">
+    @for (filter of filters(); track filter.id) {
+      <div class="list-row">
+        <div>
+          <strong>{{ filter.name }}</strong>
+          <span class="muted">{{ filter.datasetName || 'Dataset' }} · {{ filter.logic }} · {{ filter.conditions.length }} conditions · {{ filter.updatedAt | date:'medium' }}</span>
+          @if (filter.description) { <span class="muted">{{ filter.description }}</span> }
+        </div>
+        <div class="inline-actions">
+          <button class="button secondary small" type="button" (click)="apply(filter)">Apply</button>
+          <button class="button ghost small" type="button" (click)="edit(filter)">Edit</button>
+          <button class="button danger small" type="button" (click)="$event.stopPropagation(); remove(filter)">Delete</button>
+        </div>
+      </div>
+    }
+  </section>
+}

@@ -1,0 +1,98 @@
+<div class="page-head">
+  <div>
+    <h1>Dashboard</h1>
+    <p>A live summary of your datasets, processing, and reports.</p>
+  </div>
+  <div class="page-actions">
+    <a class="button secondary" routerLink="/app/explorer"><app-icon name="table" /> Explore data</a>
+    <a class="button primary" routerLink="/app/upload"><app-icon name="upload" /> Upload data</a>
+  </div>
+</div>
+
+@if (loading()) {
+  <div class="row g-3">
+    @for (item of [1, 2, 3, 4, 5]; track item) { <div class="col-12 col-md-6 col-xl"><div class="skeleton"></div></div> }
+  </div>
+} @else if (data(); as dashboard) {
+  <div class="row g-3">
+    <div class="col-12 col-md-6 col-xl"><app-kpi-card label="Total datasets" [value]="dashboard.kpis.totalDatasets" hint="Files in your workspace" icon="database" /></div>
+    <div class="col-12 col-md-6 col-xl"><app-kpi-card label="Total records" [value]="dashboard.kpis.totalRecords" hint="Rows across every dataset" icon="table" /></div>
+    <div class="col-12 col-md-6 col-xl"><app-kpi-card label="Processed records" [value]="dashboard.kpis.processedRecords" hint="Rows in datasets that imported" icon="check" /></div>
+    <div class="col-12 col-md-6 col-xl"><app-kpi-card label="Duplicate records" [value]="dashboard.kpis.duplicateRecords" hint="Rows that share an identical copy" icon="columns" /></div>
+    <div class="col-12 col-md-6 col-xl"><app-kpi-card label="Reports generated" [value]="dashboard.kpis.totalReports" hint="Completed Excel, CSV, and PDF files" icon="file" /></div>
+  </div>
+
+  <div class="split" style="margin-top: 16px">
+    <section class="panel">
+      <h2>Records by dataset</h2>
+      @if (dashboard.recordVolume.length) {
+        <app-chart-panel type="bar" [labels]="labels(dashboard.recordVolume)" [values]="counts(dashboard.recordVolume)" seriesLabel="Records" />
+      } @else {
+        <app-empty-state icon="chart" title="No chart yet" message="Upload a dataset to see record volume." />
+      }
+    </section>
+    <section class="panel">
+      <h2>Processing status</h2>
+      @if (dashboard.status.length) {
+        <app-chart-panel type="doughnut" [labels]="statusLabels(dashboard.status)" [values]="counts(dashboard.status)" seriesLabel="Datasets" />
+      } @else {
+        <app-empty-state icon="database" title="No datasets" message="Status appears after the first upload." />
+      }
+    </section>
+  </div>
+
+  <div class="row g-3" style="margin-top: 4px">
+    <div class="col-12 col-lg-7">
+      <section class="panel">
+        <h2>Recent datasets</h2>
+        @if (!dashboard.recentDatasets.length) {
+          <app-empty-state icon="upload" title="Nothing uploaded" message="Start with a CSV or Excel file.">
+            <a class="button primary" routerLink="/app/upload">Upload data</a>
+          </app-empty-state>
+        } @else {
+          @for (dataset of dashboard.recentDatasets; track dataset.id) {
+            <div class="list-row">
+              <div>
+                <a [routerLink]="['/app/explorer', dataset.id]"><strong>{{ dataset.name }}</strong></a>
+                <span class="muted">{{ dataset.rowCount | number }} rows · {{ dataset.createdAt | date:'medium' }}</span>
+              </div>
+              <app-status-pill [status]="dataset.status" />
+              <a class="button secondary small" [routerLink]="['/app/explorer', dataset.id]">Open</a>
+            </div>
+          }
+        }
+      </section>
+    </div>
+    <div class="col-12 col-lg-5">
+      <section class="panel">
+        <h2>Quick actions</h2>
+        <div class="quick-grid">
+          <a class="button secondary" routerLink="/app/upload">Upload data</a>
+          <a class="button secondary" routerLink="/app/explorer">Explore</a>
+          <a class="button secondary" routerLink="/app/filters">Filter</a>
+          <a class="button secondary" routerLink="/app/reports">New report</a>
+        </div>
+        <h2 style="margin-top: 18px">Recent reports</h2>
+        @if (!dashboard.recentReports.length) {
+          <p class="muted">Generated reports will be listed here.</p>
+        } @else {
+          @for (report of dashboard.recentReports; track report.id) {
+            <div class="list-row">
+              <div>
+                <strong>{{ report.title }}</strong>
+                <span class="muted">{{ report.format | uppercase }} · {{ report.createdAt | date:'mediumDate' }}</span>
+              </div>
+              <app-status-pill [status]="report.status" />
+              <a class="button ghost small" routerLink="/app/reports">View</a>
+            </div>
+          }
+        }
+      </section>
+    </div>
+  </div>
+
+  <section class="panel" style="margin-top: 16px">
+    <h2>Reports over the last 14 days</h2>
+    <app-chart-panel type="line" [labels]="labels(dashboard.reportTrend)" [values]="counts(dashboard.reportTrend)" seriesLabel="Reports" />
+  </section>
+}

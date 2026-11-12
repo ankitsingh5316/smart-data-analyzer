@@ -1,0 +1,148 @@
+<div class="page-head">
+  <div>
+    <h1>Advanced filters</h1>
+    <p>Filter several columns at once, such as ID, name, and city. Every filled column must match. Download the full result as CSV or Excel.</p>
+  </div>
+</div>
+
+<label class="field" style="max-width: 420px">
+  <span>Dataset</span>
+  <select [value]="datasetId()" (change)="chooseDataset($any($event.target).value)">
+    <option value="">Select a dataset</option>
+    @for (dataset of datasets(); track dataset.id) { <option [value]="dataset.id">{{ dataset.name }}</option> }
+  </select>
+</label>
+
+@if (loading()) {
+  <div class="skeleton"></div>
+} @else if (!datasetId()) {
+  <section class="panel">
+    <app-empty-state icon="filter" title="Choose a dataset" message="Filters are saved against one imported file." />
+  </section>
+} @else {
+  <section class="panel">
+    <h2>Columns</h2>
+    <p class="muted">Type a value in more than one column. Blank columns are ignored.</p>
+    <div class="filter-grid">
+      @for (column of columns(); track column.id) {
+        <label class="field" style="margin: 0">
+          <span>{{ column.columnName }}</span>
+          <input [ngModel]="columnValue(column.columnKey)" (ngModelChange)="setColumnFilter(column.columnKey, $event)" [placeholder]="'Any ' + column.columnName" />
+        </label>
+      }
+    </div>
+    @if (filledColumnCount() > 1) {
+      <p class="muted">{{ filledColumnCount() }} columns will be applied together.</p>
+    }
+
+    <div class="toolbar">
+      <label class="field" style="margin: 0">
+        <span>Extra conditions</span>
+        <select [ngModel]="logic()" (ngModelChange)="logic.set($event); scheduleCount()">
+          <option value="AND">All conditions (AND)</option>
+          <option value="OR">Any condition (OR)</option>
+        </select>
+      </label>
+      <label class="field" style="margin: 0">
+        <span>Saved filters</span>
+        <select [ngModel]="selectedSaved()" (ngModelChange)="useSaved($event)">
+          <option value="">Load a saved filter</option>
+          @for (filter of saved(); track filter.id) { <option [value]="filter.id">{{ filter.name }}</option> }
+        </select>
+      </label>
+      <button class="button secondary" type="button" (click)="addCondition()">Add extra condition</button>
+      <button class="button ghost" type="button" (click)="clearAll()">Clear all</button>
+    </div>
+
+    <div class="filter-builder">
+      @for (condition of conditions(); track condition.id) {
+        <div class="filter-line">
+          <select [ngModel]="condition.column" (ngModelChange)="updateCondition(condition.id, { column: $event })">
+            @for (column of columns(); track column.id) { <option [value]="column.columnKey">{{ column.columnName }}</option> }
+          </select>
+          <select [ngModel]="condition.operator" (ngModelChange)="updateCondition(condition.id, { operator: $event })">
+            @for (operator of operators; track operator.id) { <option [value]="operator.id">{{ operator.label }}</option> }
+          </select>
+          @if (kind(condition.operator) === 'range') {
+            <div class="inline-actions">
+              <input [type]="inputType(condition)" [ngModel]="condition.from" (ngModelChange)="updateCondition(condition.id, { from: $event })" placeholder="From" />
+              <input [type]="inputType(condition)" [ngModel]="condition.to" (ngModelChange)="updateCondition(condition.id, { to: $event })" placeholder="To" />
+            </div>
+          } @else if (kind(condition.operator) === 'value') {
+            <input [type]="inputType(condition)" [ngModel]="condition.value" (ngModelChange)="updateCondition(condition.id, { value: $event })" placeholder="Value" />
+          } @else {
+            <span class="muted">No value needed</span>
+          }
+          <button class="button ghost small" type="button" (click)="removeCondition(condition.id)">Remove</button>
+        </div>
+      }
+    </div>
+
+    <div class="toolbar" style="margin-top: 16px">
+      <button class="button primary" type="button" [disabled]="querying()" (click)="page.set(1); run()">
+        {{ querying() ? 'Applying filters…' : 'Apply filters' }}
+      </button>
+      <button class="button secondary" type="button" (click)="openExplorer()">Open full result</button>
+      @if (total() !== null) { <strong>{{ total() | number }} matching records</strong> }
+    </div>
+
+    <div class="split">
+      <label class="field"><span>Filter name</span><input [ngModel]="filterName()" (ngModelChange)="filterName.set($event)" /></label>
+      <label class="field"><span>Description</span><input [ngModel]="description()" (ngModelChange)="description.set($event)" /></label>
+    </div>
+    <button class="button secondary" type="button" (click)="save()">Save filter</button>
+  </section>
+
+  @if (searched()) {
+    <section class="panel" style="margin-top: 16px">
+      <h2>Columns to keep</h2>
+      <p class="muted">Uncheck a column to leave it out of the table and the download. At least one column stays selected.</p>
+      <div class="choice-grid" style="margin-bottom: 12px">
+        @for (column of columns(); track column.id) {
+          <label class="check">
+            <input type="checkbox" [checked]="exportColumns().includes(column.columnKey)" (change)="toggleExportColumn(column.columnKey)" />
+            <span>{{ column.columnName }}</span>
+          </label>
+        }
+      </div>
+      <button class="button ghost small" type="button" (click)="useAllColumns()">Select all columns</button>
+      <div class="toolbar" style="margin-top: 16px">
+        <h2 style="margin: 0">Matching records</h2>
+        <button class="button secondary" type="button" [disabled]="!!downloading() || !total()" (click)="download('csv')">
+          {{ downloading() === 'csv' ? 'Preparing CSV…' : 'Download CSV' }}
+        </button>
+        <button class="button secondary" type="button" [disabled]="!!downloading() || !total()" (click)="download('xlsx')">
+          {{ downloading() === 'xlsx' ? 'Preparing Excel…' : 'Download Excel' }}
+        </button>
+        <button class="button secondary" type="button" [disabled]="!!downloading() || !total()" (click)="download('pdf')">
+          {{ downloading() === 'pdf' ? 'Preparing PDF…' : 'Download PDF' }}
+        </button>
+      </div>
+      <div class="table-wrap">
+        <table class="data">
+          <thead>
+            <tr>@for (column of visibleColumns(); track column.id) { <th>{{ column.columnName }}</th> }</tr>
+          </thead>
+          <tbody>
+            @for (row of rows(); track row.id) {
+              <tr>
+                @for (column of visibleColumns(); track column.id) { <td>{{ row.values[column.columnKey] | cell }}</td> }
+              </tr>
+            } @empty {
+              <tr><td [attr.colspan]="visibleColumns().length">No records match these filters.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      @if (total()) {
+        <div class="pager">
+          <span class="muted">Page {{ page() }} of {{ totalPages() || 1 }} · {{ total() | number }} rows. CSV and Excel include every match. PDF includes the first 800 rows.</span>
+          <div class="inline-actions">
+            <button class="button secondary small" type="button" [disabled]="page() <= 1 || querying()" (click)="goTo(page() - 1)">Previous</button>
+            <button class="button secondary small" type="button" [disabled]="page() >= totalPages() || querying()" (click)="goTo(page() + 1)">Next</button>
+          </div>
+        </div>
+      }
+    </section>
+  }
+}

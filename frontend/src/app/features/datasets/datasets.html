@@ -1,0 +1,66 @@
+<div class="page-head">
+  <div>
+    <h1>Data management</h1>
+    <p>Review imported files, open them, or remove ones you no longer need.</p>
+  </div>
+  <a class="button primary" routerLink="/app/upload">Upload data</a>
+</div>
+
+<div class="toolbar">
+  <input class="search" type="search" placeholder="Search datasets" [ngModel]="search()" (ngModelChange)="search.set($event)" (keyup.enter)="load()" />
+  <button class="button secondary" type="button" (click)="load()">Search</button>
+</div>
+
+@if (loading()) {
+  <div class="skeleton" style="min-height: 220px"></div>
+} @else if (!datasets().length) {
+  <section class="panel">
+    <app-empty-state icon="database" title="No datasets" message="Upload a CSV or Excel file to create the first dataset.">
+      <a class="button primary" routerLink="/app/upload">Upload data</a>
+    </app-empty-state>
+  </section>
+} @else {
+  <div class="table-wrap">
+    <table class="data">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Status</th>
+          <th>Rows</th>
+          <th>Columns</th>
+          <th>Duplicates</th>
+          <th>Size</th>
+          <th>Imported</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (dataset of datasets(); track dataset.id) {
+          <tr>
+            <td class="dataset-name">
+              <strong>{{ dataset.name }}</strong>
+              <div class="muted">{{ dataset.originalFilename }}</div>
+            </td>
+            <td><app-status-pill [status]="dataset.status" /></td>
+            <td>{{ dataset.rowCount | number }}</td>
+            <td>{{ dataset.columnCount | number }}</td>
+            <td>{{ dataset.duplicateCount | number }}</td>
+            <td>{{ dataset.fileSize | fileSize }}</td>
+            <td>{{ dataset.createdAt | date:'medium' }}</td>
+            <td class="actions">
+              <div class="row-actions">
+                <a class="button secondary small" [routerLink]="['/app/explorer', dataset.id]">Explore</a>
+                <a class="button ghost small" [routerLink]="['/app/filters', dataset.id]">Filter</a>
+                <a class="button ghost small" [routerLink]="['/app/analytics', dataset.id]">Analyze</a>
+                <a class="button ghost small" [routerLink]="['/app/reports']" [queryParams]="{ datasetId: dataset.id }">Report</a>
+                <button class="button ghost small" type="button" (click)="rename(dataset)">Rename</button>
+                <button class="button danger small" type="button" (click)="$event.stopPropagation(); remove(dataset)">Delete</button>
+              </div>
+              @if (dataset.errorMessage) { <div class="field-error">{{ dataset.errorMessage }}</div> }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
