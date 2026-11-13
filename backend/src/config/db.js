@@ -2,8 +2,10 @@ const fs = require('fs');
 const path = require('path');
 const mysql = require('mysql2/promise');
 const { env } = require('./env');
+const { toPostgres } = require('./sqlDialect');
 
 const schemaPath = path.join(__dirname, '../../../database/schema.sql');
+const postgresSchemaPath = path.join(__dirname, '../../../database/schema.pg.sql');
 let pool;
 
 function sslOptions() {
@@ -54,8 +56,8 @@ function splitSql(sql) {
     .filter(Boolean);
 }
 
-async function runSchema(targetPool) {
-  const sql = fs.readFileSync(schemaPath, 'utf8');
+async function runSchema(targetPool, filePath = schemaPath) {
+  const sql = fs.readFileSync(filePath, 'utf8');
   const statements = splitSql(sql);
   for (const statement of statements) {
     await targetPool.query(statement);
@@ -71,7 +73,77 @@ function connectionError(error) {
   return new Error(`Could not connect to MySQL at ${env.db.host}:${env.db.port}. ${error.message}`);
 }
 
+const JSON_FIELDS = ['data', 'preferences', 'conditions', 'selected_columns', 'filter_snapshot', 'summary'];
+
+function coerceJsonParams(sql, params) {
+  if (!params || !params.length) return params;
+  const lower = String(sql).toLowerCase();
+  if (!JSON_FIELDS.some((field) => lower.includes(field))) return params;
+  return params.map((value) => {
+    if (typeof value !== 'string' || (!value.startsWith('{') && !value.startsWith('['))) return value;
+    try {
+      return JSON.parse(value);
+    } catch (error) {
+      return value;
+    }
+  });
+}
+
+function createPostgresPool() {
+  const { Pool } = require('pg');
+  const { types } = require('pg');
+  types.setTypeParser(20, (value) => Number(value));
+  const pgPool = new Pool({
+    connectionString: env.db.url,
+    ssl: { rejectUnauthorized: false },
+    max: 10
+  });
+
+  function wrap(client) {
+    return {
+      async query(sql, params = []) {
+        const result = await client.query(toPostgres(sql), coerceJsonParams(sql, params));
+        return [result.rows];
+      },
+      async beginTransaction() {
+        await client.query('BEGIN');
+      },
+      async commit() {
+        await client.query('COMMIT');
+      },
+      async rollback() {
+        await client.query('ROLLBACK');
+      },
+      release() {
+        client.release();
+      }
+    };
+  }
+
+  return {
+    query(sql, params) {
+      return wrap(pgPool).query(sql, params);
+    },
+    async getConnection() {
+      return wrap(await pgPool.connect());
+    },
+    async end() {
+      await pgPool.end();
+    }
+  };
+}
+
 async function initDatabase() {
+  if (env.db.client === 'postgres') {
+    pool = createPostgresPool();
+    await runSchema(pool, postgresSchemaPath);
+    await pool.query('SELECT 1 AS ok');
+    return pool;
+  }
+  return initMysql();
+}
+
+async function initMysql() {
   try {
     pool = mysql.createPool(connectionOptions(true));
     await pool.query('SELECT 1 AS ok');

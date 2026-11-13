@@ -7,6 +7,7 @@ const { toColumnKey, buildDatasetRows } = require('../utils/columnUtils');
 const { buildFilterClause, buildRecordQuery } = require('../utils/sqlFilters');
 const { parseUploadedFile } = require('../utils/fileParse');
 const { hashPassword, verifyPassword } = require('../utils/passwords');
+const { toPostgres } = require('../config/sqlDialect');
 
 function placeholders(sql) {
   return (sql.match(/\?/g) || []).length;
@@ -75,6 +76,14 @@ async function main() {
   assert.strictEqual(xlsxBuilt.records.length, 3);
   assert.strictEqual(xlsxBuilt.duplicateCount, 2);
   assert.ok(xlsxBuilt.columns.find((column) => column.columnKey === 'amount').nullCount >= 1);
+
+  const translated = toPostgres(
+    "SELECT JSON_UNQUOTE(JSON_EXTRACT(data, ?)) AS label FROM dataset_records WHERE created_at >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 13 DAY) AND CAST(data AS CHAR) LIKE ? ESCAPE '\\\\'"
+  );
+  assert.ok(translated.includes("(data->>substring($1 from 3))"));
+  assert.ok(translated.includes("(CURRENT_TIMESTAMP - INTERVAL '13 days')"));
+  assert.ok(translated.includes('(data)::text ILIKE $2'));
+  assert.strictEqual((translated.match(/\$/g) || []).length, 2);
 
   const passwordHash = await hashPassword('Secret123');
   assert.strictEqual(await verifyPassword('Secret123', passwordHash), true);

@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, timeout } from 'rxjs';
 import { API_URL } from '../config';
 import { ApiResponse, AuthResult, ForgotResult, SignupOtpResult, User, UserPreferences } from '../../models/models';
 
@@ -41,7 +41,7 @@ export class AuthService {
 
   requestSignupOtp(name: string, email: string, password: string): Promise<SignupOtpResult> {
     return firstValueFrom(
-      this.http.post<ApiResponse<SignupOtpResult>>(`${API_URL}/auth/signup`, { name, email, password })
+      this.http.post<ApiResponse<SignupOtpResult>>(`${API_URL}/auth/signup`, { name, email, password }).pipe(timeout(70000))
     ).then((response) => response.data);
   }
 

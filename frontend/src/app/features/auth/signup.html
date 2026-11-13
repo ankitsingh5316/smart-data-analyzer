@@ -9,7 +9,7 @@
     @if (step() === 'details') {
       <form [formGroup]="form" (ngSubmit)="submit()">
         <h1>Create account</h1>
-        <p class="muted" style="margin: 8px 0 24px">Each field shows whether it is correct. A 6-digit email code confirms the account.</p>
+        <p class="muted" style="margin: 8px 0 24px">Each field shows whether it is correct. A 6-digit code confirms the account. Email is not connected yet, so the code appears on the next screen.</p>
         <label class="field">
           <span>Name</span>
           <input formControlName="name" autocomplete="name" [class]="inputClass('name')" />

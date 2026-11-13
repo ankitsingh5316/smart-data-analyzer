@@ -7,7 +7,7 @@ export function formNotice(error: unknown, fallback: string): string {
     const payload = error.error as { message?: string } | string | null;
     const hasMessage = Boolean(payload && typeof payload === 'object' && payload.message);
     if (!hasMessage && (error.status === 0 || error.status >= 500)) {
-      return 'The server did not respond. The API is stopped until the MySQL password is set in backend/.env.';
+      return 'The server did not respond, so no verification code was created. Wait a moment and try again.';
     }
   }
   return apiErrorMessage(error, fallback);

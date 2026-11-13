@@ -16,6 +16,8 @@ const env = {
   port: Number(process.env.PORT || 5000),
   clientOrigin: process.env.CLIENT_ORIGIN || 'http://localhost:4200',
   db: {
+    client: process.env.DB_CLIENT || 'mysql',
+    url: process.env.DATABASE_URL || '',
     host: process.env.DB_HOST || '127.0.0.1',
     port: Number(process.env.DB_PORT || 3306),
     user: process.env.DB_USER || 'root',
@@ -42,6 +44,10 @@ function assertRuntimeConfig() {
   }
   if (!Number.isFinite(env.port) || env.port <= 0) {
     throw new Error('PORT must be a positive number.');
+  }
+  if (env.db.client === 'postgres') {
+    if (!env.db.url) throw new Error('Set DATABASE_URL for the hosted Postgres database.');
+    return;
   }
   if (!Number.isFinite(env.db.port) || env.db.port <= 0) {
     throw new Error('DB_PORT must be a positive number.');

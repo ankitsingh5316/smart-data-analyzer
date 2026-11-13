@@ -62,7 +62,7 @@ export class SignupComponent {
       return;
     }
     this.submitting.set(true);
-    this.setStatus('Checking your details and sending a code…', 'info');
+    this.setStatus('Creating your code. The live server can take up to a minute to wake up.', 'info');
     try {
       const value = this.form.getRawValue();
       const result = await this.auth.requestSignupOtp(value.name, value.email, value.password);
@@ -76,6 +76,11 @@ export class SignupComponent {
         'success'
       );
     } catch (error) {
+      const timedOut = Boolean(error && typeof error === 'object' && 'name' in error && error.name === 'TimeoutError');
+      if (timedOut) {
+        this.setStatus('The server took too long to answer, so no code was sent. Try again.', 'error');
+        return;
+      }
       applyServerErrors(this.form, error);
       this.setStatus(formNotice(error, 'Could not start signup.'), 'error');
     } finally {
